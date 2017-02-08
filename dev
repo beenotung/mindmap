@@ -1,0 +1,3 @@
+#!/bin/bash
+elm-format --yes src/main.elm
+elm-make src/main.elm && elm-reactor
