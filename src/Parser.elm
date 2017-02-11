@@ -1,8 +1,15 @@
 module Parser exposing (..)
 
-import Basics exposing (Never, never)
+{-| Generic building block for parser. e.g. XMLDecoder
+
+# Definition
+@docs Parser
+
+-}
 
 
+{-| The wrapper for parser. Potentially add more method for debugging (e.g. name:String)
+-}
 type alias Parser c a =
     { parse : List c -> List ( a, List c ) }
 
@@ -76,8 +83,8 @@ satisfy p =
 
 {-| Take one given element from the stream.
 
-    runParser (element 'c') ['a', 'b', 'c'] == Err ...
-    runParser (element 'a') ['a', 'b', 'c'] == Ok 'a'
+    parse (element 0) [1, 2, 3] == []
+    parse (element 1) [1, 2, 3] == [(1, [2, 3])]
 -}
 element : c -> Parser c c
 element c =

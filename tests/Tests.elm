@@ -4,6 +4,7 @@ import Test exposing (..)
 import Expect
 import Fuzz exposing (list, int, tuple, string)
 import String
+import Parser
 
 
 sample : Test
@@ -44,6 +45,12 @@ all =
             [ describe "Parser Test Suite"
                 [ fuzzWith { runs = 1000 } int "random integer test" <|
                     \i -> i > i - 1 |> Expect.true "Integer overflow?!"
+                , test "Parser.satisfy" <|
+                    \() ->
+                        Expect.equalLists (Parser.parse (Parser.element 0) [ 1, 2, 3 ]) []
+                , test "Parser.satisfy" <|
+                    \() ->
+                        Expect.equalLists (Parser.parse (Parser.element 1) [ 1, 2, 3 ]) [ ( 1, [ 2, 3 ] ) ]
                 ]
             ]
         ]
