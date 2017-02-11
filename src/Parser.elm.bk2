@@ -1,0 +1,165 @@
+module Parser exposing (..)
+
+{-| Generic building block for parser. e.g. XMLDecoder, Compiler, Interpreter
+
+# Definition
+@docs Parser
+
+-}
+
+
+{-| The wrapper for parser. Potentially add more method for debugging (e.g. name:String)
+-}
+type alias Parser c a =
+    { parse : List c -> Result String (List ( a, List c ))
+    , failed : Maybe String
+    }
+
+
+countList : (a -> Bool) -> List a -> Int
+countList =
+    countList_acc 0
+
+
+countList_acc : Int -> (a -> Bool) -> List a -> Int
+countList_acc acc p xs =
+    case xs of
+        [] ->
+            acc
+
+        x :: xs ->
+            countList_acc (acc + 1) p xs
+
+
+
+{- Implementation of Functor
+
+   class Functor (f :: * -> *) where
+     fmap :: (a -> b) -> f a -> f b
+     (<$) :: a -> f b -> f a
+-}
+
+
+isOk : Result -> Bool
+isOk result =
+    case result of
+        Ok _ ->
+            True
+
+        Err _ ->
+            False
+
+
+fst : ( a, b ) -> a
+fst ( a, _ ) =
+    a
+
+
+snd : ( a, b ) -> b
+snd ( _, b ) =
+    b
+
+
+{-| also named (<$) in Haskell.
+-}
+fmap : (a -> b) -> Parser c a -> Parser c b
+fmap f p =
+    case p.failed of
+        Just reason ->
+            fail reason
+
+        Nothing ->
+            { parse =
+                \cs ->
+                    case p.parse cs of
+                        Err reason ->
+                            Err reason
+
+                        Ok results ->
+                            let
+                                ( oks, errs ) =
+                                    results
+                                        |> List.map (process (\( a, rs ) -> [ ( f a, rs ) ]))
+                                        |> List.partition isOk
+
+                                nOk =
+                                    List.length oks
+
+                                nErr =
+                                    List.length errs
+                            in
+                                if nOk == 1 then
+                                    Ok oks
+                                else
+                                    Err "Parser error."
+            , failed = Nothing
+            }
+
+
+process : (( a, List c ) -> List ( b, List c )) -> ( a, List c ) -> Result String (List ( b, List c ))
+process f res =
+    case f res of
+        [ ( b, [] ) ] ->
+            Ok [ ( b, [] ) ]
+
+        [ ( _, rs ) ] ->
+            Err "Parser did not consume entire stream."
+
+        _ ->
+            Err "Parser error."
+
+
+const : a -> b -> a
+const a _ =
+    a
+
+
+(<$) : a -> Parser c b -> Parser c a
+(<$) a _ =
+    return a
+
+
+{-| Implementation of Applicative Monad
+-}
+(>>=) : Parser c a -> (a -> Parser c b) -> Parser c b
+(>>=) p f =
+    case p.failed of
+        Just reason ->
+            fail reason
+
+        Nothing ->
+            { parse =
+                \cs ->
+                    case p.parse of
+                        Err err ->
+                            Err err
+
+                        Ok res ->
+                            case res of
+                                [ ( a, [] ) ] ->
+                                    Ok [ (f a) ]
+            , failed = Nothing
+            }
+
+
+bind =
+    (>>=)
+
+
+{-| named (>>) in Haskell
+-}
+andThen : Parser c a -> Parser c b -> Parser c b
+andThen ma mb =
+    ma >>= (\a -> mb)
+
+
+return : a -> Parser c a
+return a =
+    { parse = \cs -> [ ( a, cs ) ] }
+
+
+fail : String -> Parser c a
+fail reason =
+    { parse = \cs -> Err reason
+    , result = Just reason
+    }

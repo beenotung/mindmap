@@ -1,2 +1,2 @@
 #!/bin/bash
-elm-package install
+elm-package install --yes

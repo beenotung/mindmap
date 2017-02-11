@@ -1,3 +1,4 @@
 #!/bin/bash
-find src -type f -name "*.elm" -printf "elm-format --yes %p && elm-make %p && " | sed 's/&& $//' | bash
-cd tests && find -type f -name "*.elm" | grep -v 'elm-stuff' | awk 'BEGIN {ORS=""}; {print "elm-format --yes "$1" && elm-make "$1" && "}' | sed 's/&& $//' | bash
+#find src -type f -name "*.elm" -printf "elm-format --yes %p && elm-make %p && " | sed 's/&& $//' | bash
+#cd tests && find -type f -name "*.elm" | grep -v 'elm-stuff' | awk 'BEGIN {ORS=""}; {print "elm-format --yes "$1" && elm-make "$1" && "}' | sed 's/&& $//' | bash
+elm-make src/Main.elm

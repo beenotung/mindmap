@@ -1,0 +1,236 @@
+module Parser exposing (..)
+
+{-| Generic building block for parser. e.g. XMLDecoder, Compiler, Interpreter
+
+# Definition
+@docs Parser
+
+-}
+
+
+{-| The wrapper for parser. Potentially add more method for debugging (e.g. name:String)
+-}
+type alias Parser c a =
+    { parse : List c -> List ( a, List c ) }
+
+
+parse : List c -> Parser c a -> List ( a, List c )
+parse =
+    flip .parse
+
+
+runParser : Parser c a -> List c -> Result String a
+runParser p cs =
+    case p.parse cs of
+        [ ( a, [] ) ] ->
+            Ok a
+
+        [ ( _, rs ) ] ->
+            Err "Parser did not consume entire stream."
+
+        _ ->
+            Err "Parser error."
+
+
+item : Parser c c
+item =
+    { parse =
+        \cs ->
+            case cs of
+                [] ->
+                    []
+
+                c :: cs ->
+                    [ ( c, cs ) ]
+    }
+
+
+{-| Functor
+@docs fmap
+-}
+fmap : (a -> b) -> Parser c a -> Parser c b
+fmap f p =
+    { parse = p.parse >> List.map (\( a, rs ) -> ( f a, rs )) }
+
+
+{-| Applicative
+
+@docs pure
+@docs ap    (<*> in Haskell)
+-}
+pure =
+    return
+
+
+
+
+
+{-| Monad
+
+@docs return
+@docs bind  (>>= in Haskell)
+-}
+return =
+    unit
+
+
+{-| Same as >>= in Haskell.
+-}
+bind : Parser c a -> (a -> Parser c b) -> Parser c b
+bind p f =
+    { parse = p.parse >> List.concatMap (\( a, s ) -> (f a).parse s) }
+
+
+unit : a -> Parser c a
+unit a =
+    { parse = \cs -> [ ( a, cs ) ] }
+
+
+{-| Same as =<< in Haskell.
+-}
+concatMap : (a -> Parser c b) -> Parser c a -> Parser c b
+concatMap =
+    flip bind
+
+
+andThen =
+    concatMap
+
+
+success : a -> Parser c a
+success =
+    unit
+
+
+failure : Parser c a
+failure =
+    { parse = \_ -> [] }
+
+
+combine : Parser c a -> Parser c a -> Parser c a
+combine p q =
+    { parse = \cs -> p.parse cs ++ q.parse cs }
+
+
+option : Parser c a -> Parser c a -> Parser c a
+option p q =
+    { parse =
+        \cs ->
+            case p.parse cs of
+                [] ->
+                    q.parse cs
+
+                res ->
+                    res
+    }
+
+
+{-| Try to parse if the predicate satisfy.
+
+    (==) 1 >> satisfy >> parse [1,2,3]    == [(1, [2,3])]
+    (==) 2 >> satisfy >> parse [1,2,3]    == []
+-}
+satisfy : (c -> Bool) -> Parser c c
+satisfy p =
+    bind item
+        (\c ->
+            if p c then
+                success c
+            else
+                failure
+        )
+
+
+{-| Take one given element from the stream.
+
+    parse (element 0) [1, 2, 3] == []
+    parse (element 1) [1, 2, 3] == [(1, [2, 3])]
+-}
+element : c -> Parser c c
+element c =
+    satisfy ((==) c)
+
+
+collectMaybe : Maybe a -> Maybe a -> List a
+collectMaybe a b =
+    case ( a, b ) of
+        ( Nothing, Nothing ) ->
+            []
+
+        ( Just a, Nothing ) ->
+            [ a ]
+
+        ( Nothing, Just a ) ->
+            [ a ]
+
+        ( Just a, Just b ) ->
+            [ a, b ]
+
+
+
+--{-| One or more.
+--
+--    (==) 1 >> satisfy >> any >> parse [0,1,2]   == []
+--    (==) 1 >> satisfy >> any >> parse [1,2,3]   == [([1], [2,3])]
+--    (==) 1 >> satisfy >> any >> parse [1,1,2]   == [([1,1], [2])]
+---}
+--some : Parser c a -> Parser c (List a)
+--some p =
+-- some_p
+--   where
+--    many_p = option some_p (success [])
+--    some_p = fmap (::) ()
+--    { parse =
+--        \cs ->
+--            case p.parse of
+--                [ ( a, rs ) ] ->
+--                    ( [ a ], rs )
+--    }
+
+
+{-| Zero or more.
+
+    (==) 1 |> satisfy |> any |> parse [0,1,2]   == [([], [0,1,2])]
+    (==) 1 |> satisfy |> any |> parse [1,2,3]   == [([1], [2,3])]
+    (==) 1 |> satisfy |> any |> parse [1,1,2]   == [([1,1], [2])]
+-}
+any : Parser c a -> Parser c (List a)
+any p =
+    { parse = \cs -> parseAll [] p cs }
+
+
+parseAll : List a -> Parser c a -> List c -> List ( List a, List c )
+parseAll acc p cs =
+    case p.parse cs of
+        [] ->
+            [ ( acc, cs ) ]
+
+        [ ( a, rs ) ] ->
+            parseAll_helper acc p ( a, rs )
+
+        _ ->
+            []
+
+
+parseAll_helper acc p ( a, rs ) =
+    parseAll (a :: acc) p rs
+
+
+{-| Zero or one.
+
+    element 1 |> any |> parse [0,1,2]   == [( Noting,  [0,1,2] )]
+    element 1 |> any |> parse [1,2,3]   == [( Just 1,  [2,3]   )]
+    element 1 |> any |> parse [1,1,2]   == [( Just 1,  [1,2]   )]
+-}
+maybe : Parser c a -> Parser c (Maybe a)
+maybe p =
+    option
+        (fmap Just p)
+        (success Nothing)
+
+
+zeroOrOne : Parser c a -> Parser c (List a)
+zeroOrOne p =
+    option
+        (fmap (flip (::) []) p)
+        (success [])

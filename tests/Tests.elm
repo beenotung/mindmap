@@ -4,7 +4,7 @@ import Test exposing (..)
 import Expect
 import Fuzz exposing (list, int, tuple, string)
 import String
-import Parser
+import Parser exposing (element, tryParse, satisfy)
 
 
 sample : Test
@@ -47,10 +47,17 @@ all =
                     \i -> i > i - 1 |> Expect.true "Integer overflow?!"
                 , test "Parser.satisfy" <|
                     \() ->
-                        Expect.equalLists (Parser.parse (Parser.element 0) [ 1, 2, 3 ]) []
-                , test "Parser.satisfy" <|
+                        Expect.equal
+                            (tryParse [ 1, 2, 3 ] (satisfy (\x -> x > 0)))
+                            (Ok ( 1, [ 2, 3 ] ))
+                , test "Parser.element" <|
                     \() ->
-                        Expect.equalLists (Parser.parse (Parser.element 1) [ 1, 2, 3 ]) [ ( 1, [ 2, 3 ] ) ]
+                        Expect.true "This parser should fail."
+                            (tryParse [ 1, 2, 3 ] (element 0) |> (==) (Err [ 1, 2, 3 ]))
+                , test "Parser.element" <|
+                    \() ->
+                        Expect.true "This parser should not fail."
+                            (tryParse [ 1, 2, 3 ] (element 1) |> (==) (Ok ( 1, [ 2, 3 ] )))
                 ]
             ]
         ]

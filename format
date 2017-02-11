@@ -1,0 +1,2 @@
+#!/bin/bash
+find -type f -name "*.elm" | grep -v "elm-stuff" | xargs elm-format --yes
