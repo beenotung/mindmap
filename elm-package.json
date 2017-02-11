@@ -2,7 +2,7 @@
     "version": "1.0.0",
     "summary": "Show mindmap from freemind format (.mm) horizontally",
     "repository": "https://github.com/beenotung/mindmap.git",
-    "license": "BSD2",
+    "license": "BSD-2-Clause",
     "source-directories": [
         "src"
     ],
