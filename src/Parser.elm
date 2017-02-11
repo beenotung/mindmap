@@ -1,15 +1,20 @@
 module Parser exposing (..)
 
+import NonEmptyList exposing (NonEmptyList)
+
+
 {-| Generic building block for parser. e.g. XMLDecoder, Compiler, Interpreter
 
 # Definition
 @docs Parser
 
 -}
-
-
 type alias Parser c a =
-    { parse : List c -> Result String (List ( a, List c )) }
+    { parse : List c -> Result String (NonEmptyList ( a, List c )) }
+
+
+fst ( a, _ ) =
+    a
 
 
 parse : List c -> Parser c a -> Result String a
@@ -19,15 +24,7 @@ parse cs p =
             Err reason
 
         Ok res ->
-            case res of
-                [ ( a, [] ) ] ->
-                    Ok a
-
-                [ _ ] ->
-                    Err "Parser did not consume entire stream."
-
-                _ ->
-                    Err "Parser error."
+            Ok (fst res.head)
 
 
 tryParse : List c -> Parser c a -> Result (List c) ( a, List c )
@@ -37,12 +34,7 @@ tryParse cs p =
             Err cs
 
         Ok res ->
-            case res of
-                [ ( a, rs ) ] ->
-                    Ok ( a, rs )
-
-                _ ->
-                    Err cs
+            Ok res.head
 
 
 item : Parser c c
@@ -51,16 +43,16 @@ item =
         \cs ->
             case cs of
                 [] ->
-                    Err "The stream is empty."
+                    Err "Cannot take item from empty stream."
 
                 c :: cs ->
-                    Ok [ ( c, cs ) ]
+                    Ok (NonEmptyList.singleton ( c, cs ))
     }
 
 
 success : a -> Parser c a
 success a =
-    { parse = \cs -> Ok [ ( a, cs ) ] }
+    { parse = \cs -> Ok (NonEmptyList.singleton ( a, cs )) }
 
 
 fail : String -> Parser c a
@@ -77,11 +69,11 @@ bind p f =
                     Err reason
 
                 Ok res ->
-                    case res of
-                        [ ( a, rs ) ] ->
+                    case NonEmptyList.toMaybeSingle res of
+                        Just ( a, rs ) ->
                             (f a).parse rs
 
-                        _ ->
+                        Nothing ->
                             Err "Parser error."
     }
 
