@@ -99,6 +99,21 @@ tryParseString s p =
                 Ok ( a, String.fromList rs )
 
 
+{-| will never fail
+-}
+withDefault : a -> Parser c a -> Parser c a
+withDefault a p =
+    { parse =
+        \cs ->
+            case p.parse cs of
+                Err _ ->
+                    Ok (NonEmptyList.singleton ( a, cs ))
+
+                Ok res ->
+                    Ok res
+    }
+
+
 item : Parser c c
 item =
     { parse =
@@ -120,6 +135,10 @@ success a =
 fail : String -> Parser c a
 fail reason =
     { parse = \cs -> Err reason }
+
+
+(>>=) =
+    bind
 
 
 bind : Parser c a -> (a -> Parser c b) -> Parser c b
@@ -262,6 +281,65 @@ combine p q =
     { parse = \cs -> combineResult (p.parse cs) (q.parse cs) }
 
 
+isOk a =
+    case a of
+        Ok _ ->
+            True
+
+        _ ->
+            False
+
+
+{-| TODO use the map funcs in Result
+-}
+chain : Parser c a -> Parser c b -> Parser c ( a, b )
+chain p q =
+    { parse =
+        \cs ->
+            case p.parse cs of
+                Err reason ->
+                    Err reason
+
+                Ok res ->
+                    res
+                        |> NonEmptyList.map
+                            (\( a, rs ) ->
+                                case q.parse rs of
+                                    Err reason ->
+                                        Err reason
+
+                                    Ok res ->
+                                        res
+                                            |> NonEmptyList.map (\( b, rs2 ) -> ( ( a, b ), rs2 ))
+                                            |> Ok
+                            )
+                        |> NonEmptyList.partition isOk
+                        |> (\( oks, errs ) ->
+                                if List.isEmpty oks then
+                                    Err "`chain` Parser failed at second step."
+                                else
+                                    case NonEmptyList.fromList oks of
+                                        Nothing ->
+                                            Err "Assertion Error: `chain` Parser failed at second step. (1)"
+
+                                        Just list ->
+                                            list
+                                                |> NonEmptyList.map
+                                                    (\res ->
+                                                        case res of
+                                                            Err _ ->
+                                                                []
+
+                                                            Ok list ->
+                                                                NonEmptyList.toList list
+                                                    )
+                                                |> NonEmptyList.concatList
+                                                |> Maybe.map Ok
+                                                |> Maybe.withDefault (Err "Assertion Error: `chain` Parser failed at second step. (2)")
+                           )
+    }
+
+
 isInRange low high target =
     (low <= target) && (target <= high)
 
@@ -282,5 +360,12 @@ int_acc acc c =
     acc * 10 + c
 
 
-
---float : Parser Char Float
+{-| Parse Float from Char.
+ valid: 1
+ valid: 1.2
+ valid  .1
+-}
+float : Parser Char Float
+float =
+    withDefault 0 int
+        |> map toFloat

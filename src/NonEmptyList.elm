@@ -41,6 +41,19 @@ append =
     (++)
 
 
+concat : NonEmptyList (NonEmptyList a) -> NonEmptyList a
+concat =
+    reduce append
+
+
+concatList : NonEmptyList (List a) -> Maybe (NonEmptyList a)
+concatList list =
+    list
+        |> toList
+        |> List.concat
+        |> fromList
+
+
 {-| f :: acc -> current -> res
 -}
 reduce : (a -> a -> a) -> NonEmptyList a -> a
@@ -73,3 +86,15 @@ map f list =
     wrap
         (f list.head)
         (List.map f list.tail)
+
+
+partition : (a -> Bool) -> NonEmptyList a -> ( List a, List a )
+partition p list =
+    let
+        ( xs, ys ) =
+            List.partition p list.tail
+    in
+        if p list.head then
+            ( list.head :: xs, ys )
+        else
+            ( xs, list.head :: ys )
