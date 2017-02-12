@@ -5,7 +5,7 @@ import Test exposing (..)
 import Expect
 import Fuzz
 import String
-import Parser exposing (any, element, satisfy, some, tryParse, tryParseString)
+import Parser exposing (any, element, satisfy, some, tryParse, tryParseString, int)
 
 
 sample : Test
@@ -91,6 +91,26 @@ all =
                         Expect.equal
                             (tryParseString "abc" (element 'a' |> any))
                             (Ok ( [ 'a' ], "bc" ))
+                , test "Parser.int" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "12345" int)
+                            (Ok ( 12345, "" ))
+                , test "Parser.int" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "012345" int)
+                            (Ok ( 12345, "" ))
+                , test "Parser.int" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "0.12345" int)
+                            (Ok ( 0, ".12345" ))
+                , test "Parser.int" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString ".12345" int)
+                            (Err "`Some` Parser failed to find at least one pattern.")
                 ]
             ]
         ]

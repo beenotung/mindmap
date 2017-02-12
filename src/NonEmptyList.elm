@@ -41,9 +41,21 @@ append =
     (++)
 
 
+{-| f :: acc -> current -> res
+-}
 reduce : (a -> a -> a) -> NonEmptyList a -> a
 reduce f list =
-    list.head
+    reduce_acc list.head f list.tail
+
+
+reduce_acc : a -> (a -> a -> a) -> List a -> a
+reduce_acc acc f list =
+    case list of
+        [] ->
+            acc
+
+        x :: xs ->
+            reduce_acc (f acc x) f xs
 
 
 fromList : List a -> Maybe (NonEmptyList a)

@@ -89,7 +89,7 @@ tryParseString : String -> Parser Char a -> Result String ( a, String )
 tryParseString s p =
     case p.parse (String.toList s) of
         Err reason ->
-            Err s
+            Err reason
 
         Ok res ->
             let
@@ -140,8 +140,12 @@ bind p f =
     }
 
 
-fmap : (a -> b) -> Parser c a -> Parser c b
-fmap f p =
+flatMap =
+    bind
+
+
+map : (a -> b) -> Parser c a -> Parser c b
+map f p =
     bind p
         (\a ->
             let
@@ -181,7 +185,7 @@ any_acc : List a -> Parser c a -> List c -> ( List a, List c )
 any_acc acc p cs =
     case tryParse cs p of
         Err rs ->
-            ( acc, rs )
+            ( List.reverse acc, rs )
 
         Ok ( a, rs ) ->
             any_acc (a :: acc) p rs
@@ -217,7 +221,7 @@ space =
 -}
 spaces : Parser Char Int
 spaces =
-    fmap List.length (any space)
+    map List.length (any space)
 
 
 option : Parser c a -> Parser c a -> Parser c a
@@ -258,19 +262,25 @@ combine p q =
     { parse = \cs -> combineResult (p.parse cs) (q.parse cs) }
 
 
+isInRange low high target =
+    (low <= target) && (target <= high)
+
+
 digit : Parser Char Int
 digit =
-    NonEmptyList.wrap 0 (List.range 1 9)
-        |> NonEmptyList.map (\i -> Char.fromCode (48 + i))
-        |> NonEmptyList.map element
-        |> NonEmptyList.reduce option
-        |> fmap Char.toCode
-        |> fmap ((-) 48)
+    satisfy (isInRange '0' '9')
+        |> map (\c -> Char.toCode c - Char.toCode '0')
+
+
+int : Parser Char Int
+int =
+    some digit
+        |> map (NonEmptyList.reduce int_acc)
+
+
+int_acc acc c =
+    acc * 10 + c
 
 
 
---
---
---int : Parser Char Int
---int =
---    item
+--float : Parser Char Float
