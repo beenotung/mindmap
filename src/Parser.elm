@@ -218,7 +218,7 @@ some p =
         \cs ->
             case tryParse cs p of
                 Err rs ->
-                    Err "`Some` Parser failed to find at least one pattern."
+                    Err "`some` Parser failed to find at least one pattern."
 
                 Ok ( a, rs ) ->
                     let
@@ -290,54 +290,21 @@ isOk a =
             False
 
 
-{-| TODO use the map funcs in Result
+{-| Pipe the require of parser to the second parser. (a.k.a. andThen)
 -}
 chain : Parser c a -> Parser c b -> Parser c ( a, b )
 chain p q =
-    { parse =
-        \cs ->
-            case p.parse cs of
-                Err reason ->
-                    Err reason
+    bind p
+        (\a ->
+            bind q
+                (\b ->
+                    success ( a, b )
+                )
+        )
 
-                Ok res ->
-                    res
-                        |> NonEmptyList.map
-                            (\( a, rs ) ->
-                                case q.parse rs of
-                                    Err reason ->
-                                        Err reason
 
-                                    Ok res ->
-                                        res
-                                            |> NonEmptyList.map (\( b, rs2 ) -> ( ( a, b ), rs2 ))
-                                            |> Ok
-                            )
-                        |> NonEmptyList.partition isOk
-                        |> (\( oks, errs ) ->
-                                if List.isEmpty oks then
-                                    Err "`chain` Parser failed at second step."
-                                else
-                                    case NonEmptyList.fromList oks of
-                                        Nothing ->
-                                            Err "Assertion Error: `chain` Parser failed at second step. (1)"
-
-                                        Just list ->
-                                            list
-                                                |> NonEmptyList.map
-                                                    (\res ->
-                                                        case res of
-                                                            Err _ ->
-                                                                []
-
-                                                            Ok list ->
-                                                                NonEmptyList.toList list
-                                                    )
-                                                |> NonEmptyList.concatList
-                                                |> Maybe.map Ok
-                                                |> Maybe.withDefault (Err "Assertion Error: `chain` Parser failed at second step. (2)")
-                           )
-    }
+andThen =
+    chain
 
 
 isInRange low high target =
