@@ -2,6 +2,7 @@ module Parser exposing (..)
 
 import Char
 import NonEmptyList exposing (NonEmptyList)
+import LangUtils exposing (isOk, isErr)
 
 
 {-| Generic building block for parser. e.g. XMLDecoder, Compiler, Interpreter
@@ -11,7 +12,11 @@ import NonEmptyList exposing (NonEmptyList)
 
 -}
 type alias Parser c a =
-    { parse : List c -> Result String (NonEmptyList ( a, List c )) }
+    { parse : List c -> ParserResult c a }
+
+
+type alias ParserResult c a =
+    Result String (NonEmptyList ( a, List c ))
 
 
 xorResult a b =
@@ -243,6 +248,11 @@ spaces =
     map List.length (any space)
 
 
+{-| Alternative.
+
+If the first parser success, return the result.
+Otherwise return the result of second parser.
+-}
 option : Parser c a -> Parser c a -> Parser c a
 option p q =
     { parse =
@@ -276,18 +286,21 @@ options_acc acc ps =
             options_acc (option acc x) xs
 
 
+{-| concat the result of both parsers
+-}
 combine : Parser c a -> Parser c a -> Parser c a
 combine p q =
     { parse = \cs -> combineResult (p.parse cs) (q.parse cs) }
 
 
-isOk a =
-    case a of
-        Ok _ ->
-            True
 
-        _ ->
-            False
+--optional : Parser c a -> Parser c (Maybe a) TODO
+--optional p =
+--    { parse = \cs->
+--     case p.parse cs of
+--      Err _ ->
+--      Ok res ->
+--    }
 
 
 {-| Pipe the require of parser to the second parser. (a.k.a. andThen)
@@ -330,9 +343,28 @@ int_acc acc c =
 {-| Parse Float from Char.
  valid: 1
  valid: 1.2
- valid  .1
+ valid: .1
 -}
 float : Parser Char Float
 float =
-    withDefault 0 int
+    float_helper_1
         |> map toFloat
+
+
+{-| Before decimal place.
+-}
+float_helper_1 =
+    withDefault 0 int
+
+
+{-| The decimal place.
+-}
+float_helper_2 =
+    element '.'
+        |> any
+
+
+{-| After decimal place.
+-}
+float_helper_3 =
+    any

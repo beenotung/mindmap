@@ -1,5 +1,7 @@
 module NonEmptyList exposing (..)
 
+import LangUtils exposing (isOk, isErr)
+
 
 type alias NonEmptyList a =
     { head : a
@@ -88,8 +90,14 @@ map f list =
         (List.map f list.tail)
 
 
-partition : (a -> Bool) -> NonEmptyList a -> ( List a, List a )
-partition p list =
+concatMap : (a -> NonEmptyList b) -> NonEmptyList a -> NonEmptyList b
+concatMap f list =
+    map f list
+        |> concat
+
+
+partitionToList : (a -> Bool) -> NonEmptyList a -> ( List a, List a )
+partitionToList p list =
     let
         ( xs, ys ) =
             List.partition p list.tail
@@ -98,3 +106,34 @@ partition p list =
             ( list.head :: xs, ys )
         else
             ( xs, list.head :: ys )
+
+
+partition : (a -> Bool) -> NonEmptyList a -> Result ( List a, NonEmptyList a ) ( NonEmptyList a, List a )
+partition p list =
+    let
+        ( xs, ys ) =
+            List.partition p list.tail
+    in
+        if p list.head then
+            Ok ( wrap list.head xs, ys )
+        else
+            Err ( xs, wrap list.head ys )
+
+
+filter : (a -> Bool) -> NonEmptyList a -> List a
+filter p list =
+    toList list |> List.filter p
+
+
+partitionResults : NonEmptyList (Result e a) -> Result ( NonEmptyList e, List a ) ( List e, NonEmptyList a )
+partitionResults list =
+    let
+        ( errs, oks ) =
+            LangUtils.partitionResults list.tail
+    in
+        case list.head of
+            Ok v ->
+                Ok ( errs, wrap v oks )
+
+            Err v ->
+                Err ( wrap v errs, oks )
