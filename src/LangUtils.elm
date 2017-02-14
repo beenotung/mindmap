@@ -1,4 +1,4 @@
-module LangUtils exposing (isOk, isErr, partitionResults)
+module LangUtils exposing (isOk, isErr, partitionResults, isInRange, fst, snd, const)
 
 
 isOk res =
@@ -32,3 +32,19 @@ partitionResults_acc errs oks res =
 
                 Err v ->
                     partitionResults_acc (v :: errs) oks xs
+
+
+isInRange low high target =
+    (low <= target) && (target <= high)
+
+
+fst ( a, _ ) =
+    a
+
+
+snd ( _, b ) =
+    b
+
+
+const a _ =
+    a

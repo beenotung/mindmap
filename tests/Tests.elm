@@ -125,12 +125,12 @@ all =
                     \() ->
                         Expect.equal
                             (tryParseString ".1" float)
-                            (Ok ( 0.1, "" ))
+                            (Err "Missing digit for float.")
                 , test "Parser.float" <|
                     \() ->
                         Expect.equal
                             (tryParseString "a" float)
-                            (Err "`float` Parser failed.")
+                            (Err "Missing digit for float.")
                 ]
             ]
         ]

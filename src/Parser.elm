@@ -62,14 +62,6 @@ combineResult a b =
             Ok y
 
 
-fst ( a, _ ) =
-    a
-
-
-snd ( _, b ) =
-    b
-
-
 parse : List c -> Parser c a -> Result String a
 parse cs p =
     case p.parse cs of
@@ -77,7 +69,7 @@ parse cs p =
             Err reason
 
         Ok res ->
-            Ok (fst res.head)
+            Ok (LangUtils.fst res.head)
 
 
 tryParse : List c -> Parser c a -> Result (List c) ( a, List c )
@@ -178,6 +170,16 @@ map f p =
             in
                 success b
         )
+
+
+mapError : (String -> String) -> Parser c a -> Parser c a
+mapError f p =
+    { parse = p.parse >> Result.mapError f }
+
+
+replaceError : String -> Parser c a -> Parser c a
+replaceError =
+    LangUtils.const >> mapError
 
 
 satisfy : (a -> Bool) -> Parser a a
@@ -294,13 +296,22 @@ combine p q =
 
 
 
---optional : Parser c a -> Parser c (Maybe a) TODO
---optional p =
---    { parse = \cs->
---     case p.parse cs of
---      Err _ ->
---      Ok res ->
---    }
+{- TODO -}
+
+
+optional : Parser c a -> Parser c (Maybe a)
+optional p =
+    { parse =
+        \cs ->
+            case p.parse cs of
+                Err _ ->
+                    Ok (NonEmptyList.singleton ( Nothing, cs ))
+
+                Ok res ->
+                    res
+                        |> NonEmptyList.map (\( a, rs ) -> ( Just a, rs ))
+                        |> Ok
+    }
 
 
 {-| Pipe the require of parser to the second parser. (a.k.a. andThen)
@@ -320,13 +331,9 @@ andThen =
     chain
 
 
-isInRange low high target =
-    (low <= target) && (target <= high)
-
-
 digit : Parser Char Int
 digit =
-    satisfy (isInRange '0' '9')
+    satisfy (LangUtils.isInRange '0' '9')
         |> map (\c -> Char.toCode c - Char.toCode '0')
 
 
@@ -341,30 +348,54 @@ int_acc acc c =
 
 
 {-| Parse Float from Char.
- valid: 1
- valid: 1.2
- valid: .1
+ valid   : 1
+ valid   : 1.2
+
+ invalid : .1
+
+ example : "1.a" ~~> (1, ".a")
+
+ self : p1 ++ optional(p2)
+ p1   : int (required, not optional)
+ p2   : if '.' exist,
+          then parse int then (int->float with offset)
+          else fail
 -}
 float : Parser Char Float
 float =
-    float_helper_1
-        |> map toFloat
+    chain
+        float_helper_1
+        (withDefault 0 float_helper_2)
+        |> map (uncurry (+))
 
 
 {-| Before decimal place.
 -}
+float_helper_1 : Parser Char Float
 float_helper_1 =
-    withDefault 0 int
+    int
+        |> map toFloat
+        |> replaceError "Missing digit for float."
 
 
 {-| The decimal place.
 -}
+float_helper_2 : Parser Char Float
 float_helper_2 =
-    element '.'
-        |> any
+    chain (element '.') (some digit)
+        |> map
+            (\( _, list ) ->
+                float_helper_3 (toFloat list.head / 10) (1 / 100) list.tail
+            )
 
 
 {-| After decimal place.
 -}
-float_helper_3 =
-    any
+float_helper_3 : Float -> Float -> List Int -> Float
+float_helper_3 acc offset list =
+    case list of
+        [] ->
+            acc
+
+        x :: xs ->
+            float_helper_3 (acc + (toFloat x) * offset) (offset / 10) xs
