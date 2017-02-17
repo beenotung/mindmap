@@ -2,7 +2,7 @@ module Parser exposing (..)
 
 import Char
 import NonEmptyList exposing (NonEmptyList)
-import LangUtils exposing (isOk, isErr)
+import LangUtils exposing (isOk, isErr, const)
 
 
 {-| Generic building block for parser. e.g. XMLDecoder, Compiler, Interpreter
@@ -193,9 +193,35 @@ satisfy p =
         )
 
 
+{-| Similar to satisfy, but apply to the stream.
+-}
+check : String -> (List c -> Bool) -> Parser c a -> Parser c a
+check errorMsg pred parser =
+    { parse =
+        \cs ->
+            if pred cs then
+                parser.parse cs
+            else
+                Err errorMsg
+    }
+
+
 element : a -> Parser a a
 element a =
     (==) a |> satisfy
+
+
+elementSeq : List c -> Parser c (List c)
+elementSeq cs =
+    case cs of
+        [] ->
+            success []
+
+        x :: xs ->
+            chain
+                (element x)
+                (elementSeq xs)
+                |> map (const cs)
 
 
 {-| Zero or more.
@@ -331,6 +357,27 @@ andThen =
     chain
 
 
+fst : Parser c ( a, b ) -> Parser c a
+fst =
+    map LangUtils.fst
+
+
+snd : Parser c ( a, b ) -> Parser c b
+snd =
+    map LangUtils.snd
+
+
+(*>) : Parser c a -> Parser c b -> Parser c b
+(*>) p q =
+    chain p q
+        |> snd
+
+
+(<*) : Parser c a -> Parser c b -> Parser c a
+(<*) p q =
+    chain p q |> fst
+
+
 digit : Parser Char Int
 digit =
     satisfy (LangUtils.isInRange '0' '9')
@@ -348,18 +395,19 @@ int_acc acc c =
 
 
 {-| Parse Float from Char.
- valid   : 1
- valid   : 1.2
 
- invalid : .1
+    valid   : 1
+    valid   : 1.2
 
- example : "1.a" ~~> (1, ".a")
+    invalid : .1
 
- self : p1 ++ optional(p2)
- p1   : int (required, not optional)
- p2   : if '.' exist,
-          then parse int then (int->float with offset)
-          else fail
+    Example : "1.a" ~~> (1, ".a")
+
+    self : p1 ++ optional(p2)
+    p1   : int (required, not optional)
+    p2   : if '.' exist,
+         then parse int then (int->float with offset)
+         else fail
 -}
 float : Parser Char Float
 float =
@@ -399,3 +447,30 @@ float_helper_3 acc offset list =
 
         x :: xs ->
             float_helper_3 (acc + (toFloat x) * offset) (offset / 10) xs
+
+
+string : String -> Parser Char String
+string content =
+    content
+        |> String.toList
+        |> elementSeq
+        |> map (const content)
+
+
+{-| generate ta string parser.
+
+    Example : quotedString '"' "\\\"" ~> parser
+
+    p1 : element separatorChar
+    p2 : any (not $ word escapeSeq)
+    p3 : element separatorChar
+
+-}
+quotedString : Char -> String -> Parser Char String
+quotedString separatorChar escapeSeq =
+    chain
+        (element separatorChar)
+        (any (check "Escape sequence met." (LangUtils.notStartWith separatorChar)))
+        |> snd
+        |> (flip chain) (separatorChar)
+        |> fst

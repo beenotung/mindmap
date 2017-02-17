@@ -1,4 +1,4 @@
-module LangUtils exposing (isOk, isErr, partitionResults, isInRange, fst, snd, const)
+module LangUtils exposing (isOk, isErr, partitionResults, isInRange, fst, snd, const, (>>>), startWith, notStartWith)
 
 
 isOk res =
@@ -48,3 +48,31 @@ snd ( _, b ) =
 
 const a _ =
     a
+
+
+infixl 9 >>>
+(>>>) : (a -> b) -> (b -> c) -> (c -> d) -> (a -> d)
+(>>>) f1 f2 f3 =
+    f1 >> f2 >> f3
+
+
+startWith : List a -> List a -> Bool
+startWith pattern target =
+    case pattern of
+        [] ->
+            True
+
+        x :: xs ->
+            case target of
+                [] ->
+                    False
+
+                y :: ys ->
+                    if x == y then
+                        startWith xs ys
+                    else
+                        False
+
+
+notStartWith p t =
+    not (startWith p t)
