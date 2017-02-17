@@ -457,6 +457,11 @@ string content =
         |> map (const content)
 
 
+quotedString : Parser Char String
+quotedString =
+    genQuotedString '"' "\\\""
+
+
 {-| generate ta string parser.
 
     Example : quotedString '"' "\\\"" ~> parser
@@ -466,11 +471,17 @@ string content =
     p3 : element separatorChar
 
 -}
-quotedString : Char -> String -> Parser Char String
-quotedString separatorChar escapeSeq =
+genQuotedString : Char -> String -> Parser Char String
+genQuotedString separatorChar escapeSeq =
+    genQuotedSeq separatorChar (String.toList escapeSeq)
+        |> map String.fromList
+
+
+genQuotedSeq : c -> List c -> Parser c (List c)
+genQuotedSeq separatorElement escapeSeq =
     let
         separatorParser =
-            element separatorChar
+            element separatorElement
     in
         chain
             separatorParser
@@ -478,9 +489,9 @@ quotedString separatorChar escapeSeq =
                 \cs ->
                     let
                         ( res, rs ) =
-                            quotedString_helper [] cs separatorChar (String.toList escapeSeq)
+                            genQuotedSeq_helper [] cs separatorElement escapeSeq (List.length escapeSeq)
                     in
-                        Ok (NonEmptyList.singleton ( String.fromList res, rs ))
+                        Ok (NonEmptyList.singleton ( res, rs ))
             }
             |> snd
             |> (flip chain) separatorParser
@@ -488,14 +499,36 @@ quotedString separatorChar escapeSeq =
             |> replaceError "Cannot find a pair of separatorChar."
 
 
-quotedString_helper : List Char -> List Char -> Char -> List Char -> ( List Char, List Char )
-quotedString_helper acc stream stopChar escapeSeq =
+genQuotedSeq_helper : List c -> List c -> c -> List c -> Int -> ( List c, List c )
+genQuotedSeq_helper acc stream stopElement escapeSeq escapeSeqLen =
     case stream of
         [] ->
             ( List.reverse acc, [] )
 
         x :: xs ->
-            if x == stopChar && LangUtils.notStartWith escapeSeq stream then
+            if LangUtils.startWith escapeSeq stream then
+                {- met escape sequence, replace to the escaped element, then continue -}
+                genQuotedSeq_helper (stopElement :: acc) (List.drop escapeSeqLen stream) stopElement escapeSeq escapeSeqLen
+            else if x == stopElement then
+                {- stop -}
                 ( List.reverse acc, stream )
             else
-                quotedString_helper (x :: acc) xs stopChar escapeSeq
+                {- continue -}
+                genQuotedSeq_helper (x :: acc) xs stopElement escapeSeq escapeSeqLen
+
+
+{-| return (newAcc,restStream).
+-}
+genQuotedSeq_helper_takeSeq : List c -> List c -> List c -> ( List c, List c )
+genQuotedSeq_helper_takeSeq acc stream pattern =
+    case pattern of
+        [] ->
+            ( acc, stream )
+
+        x :: xs ->
+            case stream of
+                [] ->
+                    ( acc, [] )
+
+                y :: ys ->
+                    genQuotedSeq_helper_takeSeq (x :: acc) ys xs

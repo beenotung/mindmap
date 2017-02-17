@@ -149,8 +149,23 @@ all =
                 , test "Parser.quotedString" <|
                     \() ->
                         Expect.equal
-                            (tryParseString "123" (Parser.quotedString '"' "\\\""))
+                            (tryParseString "123" Parser.quotedString)
                             (Err "Cannot find a pair of separatorChar.")
+                , test "Parser.quotedString" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "\"123\"" Parser.quotedString)
+                            (Ok ( "123", "" ))
+                , test "Parser.quotedString" <|
+                    \() ->
+                        Expect.equal
+                            {-
+                               input           : 12\"3
+                               expected output : 12"3  ,   <>
+                               real output     : 12\   ,   3"
+                            -}
+                            (tryParseString "\"12\\\"3\"" Parser.quotedString)
+                            (Ok ( "12\"3", "" ))
                 ]
             ]
         ]
