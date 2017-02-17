@@ -474,20 +474,28 @@ quotedString separatorChar escapeSeq =
     in
         chain
             separatorParser
-            { parse = \cs -> Err "to use helper" }
+            { parse =
+                \cs ->
+                    let
+                        ( res, rs ) =
+                            quotedString_helper [] cs separatorChar (String.toList escapeSeq)
+                    in
+                        Ok (NonEmptyList.singleton ( String.fromList res, rs ))
+            }
             |> snd
             |> (flip chain) separatorParser
             |> fst
+            |> replaceError "Cannot find a pair of separatorChar."
 
 
-quotedString_helper : List Char -> List Char -> List Char -> ( List Char, List Char )
-quotedString_helper acc stream stopSeq =
+quotedString_helper : List Char -> List Char -> Char -> List Char -> ( List Char, List Char )
+quotedString_helper acc stream stopChar escapeSeq =
     case stream of
         [] ->
             ( List.reverse acc, [] )
 
         x :: xs ->
-            if LangUtils.startWith stopSeq stream then
+            if x == stopChar && LangUtils.notStartWith escapeSeq stream then
                 ( List.reverse acc, stream )
             else
-                quotedString_helper (x :: acc) xs stopSeq
+                quotedString_helper (x :: acc) xs stopChar escapeSeq

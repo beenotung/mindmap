@@ -146,6 +146,11 @@ all =
                         Expect.equal
                             (tryParseString "a" float)
                             (Err "Missing digit for float.")
+                , test "Parser.quotedString" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "123" (Parser.quotedString '"' "\\\""))
+                            (Err "Cannot find a pair of separatorChar.")
                 ]
             ]
         ]
