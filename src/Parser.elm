@@ -468,9 +468,26 @@ string content =
 -}
 quotedString : Char -> String -> Parser Char String
 quotedString separatorChar escapeSeq =
-    chain
-        (element separatorChar)
-        (any (check "Escape sequence met." (LangUtils.notStartWith separatorChar)))
-        |> snd
-        |> (flip chain) (separatorChar)
-        |> fst
+    let
+        separatorParser =
+            element separatorChar
+    in
+        chain
+            separatorParser
+            { parse = \cs -> Err "to use helper" }
+            |> snd
+            |> (flip chain) separatorParser
+            |> fst
+
+
+quotedString_helper : List Char -> List Char -> List Char -> ( List Char, List Char )
+quotedString_helper acc stream stopSeq =
+    case stream of
+        [] ->
+            ( List.reverse acc, [] )
+
+        x :: xs ->
+            if LangUtils.startWith stopSeq stream then
+                ( List.reverse acc, stream )
+            else
+                quotedString_helper (x :: acc) xs stopSeq

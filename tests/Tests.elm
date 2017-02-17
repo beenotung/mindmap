@@ -1,5 +1,6 @@
 module Tests exposing (..)
 
+import LangUtils
 import NonEmptyList
 import Test exposing (..)
 import Expect
@@ -43,7 +44,21 @@ all : Test
 all =
     describe "MindMap Test Suite"
         [ describe "Library Test Suite"
-            [ describe "Parser Test Suite"
+            [ describe "LangUtils"
+                [ test "LangUtils.startWith" <|
+                    \() ->
+                        Expect.true "the pattern should be matched"
+                            (LangUtils.startWith [ 1, 2, 3 ] [ 1, 2, 3 ])
+                , test "LangUtils.startWith" <|
+                    \() ->
+                        Expect.true "the pattern should be matched"
+                            (LangUtils.startWith [ 1, 2, 3 ] [ 1, 2, 3, 4 ])
+                , test "LangUtils.startWith" <|
+                    \() ->
+                        Expect.false "the pattern should not be matched"
+                            (LangUtils.startWith [ 1, 3 ] [ 1, 2, 3 ])
+                ]
+            , describe "Parser Test Suite"
                 [ fuzzWith { runs = 1000 } Fuzz.int "random integer test" <|
                     \i -> i > i - 1 |> Expect.true "Integer overflow?!"
                 , test "Parser.satisfy" <|
