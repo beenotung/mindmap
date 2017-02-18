@@ -145,6 +145,11 @@ fail reason =
     flip bind
 
 
+andThen : (a -> Parser c b) -> Parser c a -> Parser c b
+andThen =
+    flip bind
+
+
 bind : Parser c a -> (a -> Parser c b) -> Parser c b
 bind p f =
     { parse =
@@ -352,7 +357,7 @@ optional p =
     }
 
 
-{-| Pipe the require of parser to the second parser. (a.k.a. andThen)
+{-| Pipe the require of parser to the second parser.
 -}
 chain : Parser c a -> Parser c b -> Parser c ( a, b )
 chain p q =
@@ -370,10 +375,6 @@ chain p q =
 pairWith : Parser c b -> Parser c a -> Parser c ( a, b )
 pairWith =
     flip chain
-
-
-andThen =
-    chain
 
 
 fst : Parser c ( a, b ) -> Parser c a
