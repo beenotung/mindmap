@@ -21,30 +21,25 @@ type alias NodeRecord =
     }
 
 
-char : Char -> Parser Char Char
-char =
-    Parser.element
-
-
 nodeHead : Parser Char String
 nodeHead =
-    char '<'
+    Parser.char '<'
         *> Parser.englishWord
-        <* char '>'
+        <* Parser.char '>'
 
 
 nodeTail : Parser Char String
 nodeTail =
-    char '<'
-        *> char '/'
+    Parser.char '<'
+        *> Parser.char '/'
         *> Parser.englishWord
-        <* char '>'
+        <* Parser.char '>'
 
 
 attr : Parser Char Attr
 attr =
     Parser.englishWord
-        <* char '='
+        <* Parser.char '='
         |> Parser.flippedChain Parser.quotedString
         |> Parser.map
             (\( a, b ) ->

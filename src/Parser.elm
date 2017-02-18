@@ -211,6 +211,11 @@ element a =
     (==) a |> satisfy
 
 
+char : Char -> Parser Char Char
+char =
+    element
+
+
 elementSeq : List c -> Parser c (List c)
 elementSeq cs =
     case cs of

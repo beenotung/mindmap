@@ -160,13 +160,18 @@ all =
                 , test "Parser.quotedString" <|
                     \() ->
                         Expect.equal
-                            {-
-                               input           : 12\"3
-                               expected output : 12"3  ,   <>
-                               real output     : 12\   ,   3"
-                            -}
                             (tryParseString "\"12\\\"3\"" Parser.quotedString)
                             (Ok ( "12\"3", "" ))
+                , test "Parser.englishWord" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "word" Parser.englishWord)
+                            (Ok ( "word", "" ))
+                , test "Parser.englishWord" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "word>" Parser.englishWord)
+                            (Ok ( "word", ">" ))
                 ]
             , describe "Xml.Decode"
                 [ test "Xml.Decode.nodeHead" <|
@@ -179,6 +184,17 @@ all =
                         Expect.equal
                             (tryParseString "</map>" Xml.Decode.nodeTail)
                             (Ok ( "map", "" ))
+                , test "Xml.Decode.attr" <|
+                    \() ->
+                        Expect.equal
+                            (tryParse (String.toList "ID=\"123\"") Xml.Decode.attr)
+                            (Ok
+                                ( { name = "ID"
+                                  , value = "123"
+                                  }
+                                , []
+                                )
+                            )
                 ]
             ]
         ]
