@@ -7,6 +7,7 @@ import Expect
 import Fuzz
 import String
 import Parser exposing (any, element, satisfy, some, tryParse, tryParseString, int, float)
+import Xml.Decode
 
 
 sample : Test
@@ -166,6 +167,18 @@ all =
                             -}
                             (tryParseString "\"12\\\"3\"" Parser.quotedString)
                             (Ok ( "12\"3", "" ))
+                ]
+            , describe "Xml.Decode"
+                [ test "Xml.Decode.nodeHead" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "<map>" Xml.Decode.nodeHead)
+                            (Ok ( "map", "" ))
+                , test "Xml.Decode.nodeTail" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "</map>" Xml.Decode.nodeTail)
+                            (Ok ( "map", "" ))
                 ]
             ]
         ]

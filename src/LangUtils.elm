@@ -1,4 +1,6 @@
-module LangUtils exposing (isOk, isErr, partitionResults, isInRange, fst, snd, const, (>>>), startWith, notStartWith)
+module LangUtils exposing (isOk, isErr, partitionResults, isInRange, fst, snd, const, (>>>), startWith, notStartWith, isEnglishChar)
+
+import Char
 
 
 isOk res =
@@ -76,3 +78,7 @@ startWith pattern target =
 
 notStartWith p t =
     not (startWith p t)
+
+
+isEnglishChar c =
+    Char.isLower c || Char.isUpper c

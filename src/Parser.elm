@@ -353,6 +353,10 @@ chain p q =
         )
 
 
+flippedChain =
+    flip chain
+
+
 andThen =
     chain
 
@@ -380,18 +384,18 @@ snd =
 
 digit : Parser Char Int
 digit =
-    satisfy (LangUtils.isInRange '0' '9')
+    satisfy Char.isDigit
         |> map (\c -> Char.toCode c - Char.toCode '0')
 
 
 int : Parser Char Int
 int =
-    some digit
-        |> map (NonEmptyList.reduce int_acc)
-
-
-int_acc acc c =
-    acc * 10 + c
+    let
+        int_acc acc c =
+            acc * 10 + c
+    in
+        some digit
+            |> map (NonEmptyList.reduce int_acc)
 
 
 {-| Parse Float from Char.
@@ -532,3 +536,15 @@ genQuotedSeq_helper_takeSeq acc stream pattern =
 
                 y :: ys ->
                     genQuotedSeq_helper_takeSeq (x :: acc) ys xs
+
+
+englishChar : Parser Char Char
+englishChar =
+    satisfy LangUtils.isEnglishChar
+
+
+englishWord : Parser Char String
+englishWord =
+    some englishChar
+        |> map NonEmptyList.toList
+        |> map String.fromList
