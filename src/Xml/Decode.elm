@@ -29,7 +29,7 @@ node =
     { parse =
         \cs ->
             (nodeHead
-                |> Parser.pairWith (Parser.any node)
+                |> Parser.pairWith (Parser.any node |> Parser.wrapBySpaces)
                 |> Parser.pairWith nodeTail
                 |> (flip Parser.bind)
                     (\( ( ( headTag, attrs ), childNodes ), tailTag ) ->

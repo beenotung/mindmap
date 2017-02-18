@@ -293,6 +293,11 @@ spaces =
     map List.length (any space)
 
 
+wrapBySpaces : Parser Char a -> Parser Char a
+wrapBySpaces p =
+    spaces *> p <* spaces
+
+
 {-| Alternative.
 
 If the first parser success, return the result.
