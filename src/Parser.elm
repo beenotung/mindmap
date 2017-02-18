@@ -140,8 +140,9 @@ fail reason =
     { parse = \cs -> Err reason }
 
 
+(>>=) : (a -> Parser c b) -> Parser c a -> Parser c b
 (>>=) =
-    bind
+    flip bind
 
 
 bind : Parser c a -> (a -> Parser c b) -> Parser c b
@@ -364,8 +365,10 @@ chain p q =
         )
 
 
-flippedChain : Parser c b -> Parser c a -> Parser c ( a, b )
-flippedChain =
+{-| flipped chain.
+-}
+pairWith : Parser c b -> Parser c a -> Parser c ( a, b )
+pairWith =
     flip chain
 
 

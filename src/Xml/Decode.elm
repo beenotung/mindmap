@@ -1,6 +1,11 @@
 module Xml.Decode exposing (..)
 
+import Json.Decode
 import Parser exposing (Parser, (<*), (*>), (>>=))
+
+
+type Decoder a
+    = Decoder
 
 
 type alias Attr =
@@ -9,15 +14,33 @@ type alias Attr =
     }
 
 
-type alias Node =
+type alias NodeMeta =
     { tag : String
-    , attr : List Attr
+    , attrs : List Attr
     }
 
 
-type alias NodeRecord =
-    { parent : Node
-    , children : List Node
+type Node
+    = Node NodeMeta (List Node)
+
+
+node : Parser Char Node
+node =
+    { parse =
+        \cs ->
+            (nodeHead
+                |> Parser.pairWith (Parser.any node)
+                |> Parser.pairWith nodeTail
+                |> (flip Parser.bind)
+                    (\( ( ( headTag, attrs ), childNodes ), tailTag ) ->
+                        if headTag == tailTag then
+                            Parser.success
+                                (Node { tag = headTag, attrs = attrs } childNodes)
+                        else
+                            Parser.fail <| "opening tag `" ++ headTag ++ "` does not match closing tag `" ++ tailTag ++ "`."
+                    )
+            ).parse
+                cs
     }
 
 
@@ -25,7 +48,7 @@ nodeHead : Parser Char ( String, List Attr )
 nodeHead =
     Parser.char '<'
         *> Parser.englishWord
-        |> Parser.flippedChain (Parser.spaces *> Parser.any attr <* Parser.spaces)
+        |> Parser.pairWith (Parser.spaces *> Parser.any attr <* Parser.spaces)
         <* Parser.char '>'
 
 
@@ -41,7 +64,7 @@ attr : Parser Char Attr
 attr =
     Parser.englishWord
         <* Parser.char '='
-        |> Parser.flippedChain Parser.quotedString
+        |> Parser.pairWith Parser.quotedString
         |> Parser.map
             (\( a, b ) ->
                 { name = a
