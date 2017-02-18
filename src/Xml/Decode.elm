@@ -21,10 +21,11 @@ type alias NodeRecord =
     }
 
 
-nodeHead : Parser Char String
+nodeHead : Parser Char ( String, List Attr )
 nodeHead =
     Parser.char '<'
         *> Parser.englishWord
+        |> Parser.flippedChain (Parser.spaces *> Parser.any attr <* Parser.spaces)
         <* Parser.char '>'
 
 

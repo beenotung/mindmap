@@ -5,6 +5,12 @@ import NonEmptyList exposing (NonEmptyList)
 import LangUtils exposing (isOk, isErr, const)
 
 
+infixl 0 *>
+
+
+infixl 0 <*
+
+
 {-| Generic building block for parser. e.g. XMLDecoder, Compiler, Interpreter
 
 # Definition
@@ -358,6 +364,7 @@ chain p q =
         )
 
 
+flippedChain : Parser c b -> Parser c a -> Parser c ( a, b )
 flippedChain =
     flip chain
 

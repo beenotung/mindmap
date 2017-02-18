@@ -178,7 +178,7 @@ all =
                     \() ->
                         Expect.equal
                             (tryParseString "<map>" Xml.Decode.nodeHead)
-                            (Ok ( "map", "" ))
+                            (Ok ( ( "map", [] ), "" ))
                 , test "Xml.Decode.nodeTail" <|
                     \() ->
                         Expect.equal
@@ -195,6 +195,11 @@ all =
                                 , []
                                 )
                             )
+                , test "Xml.Decode.nodeHead" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "<map ID=\"123\">" Xml.Decode.nodeHead)
+                            (Ok ( ( "map", [ { name = "ID", value = "123" } ] ), "" ))
                 ]
             ]
         ]
