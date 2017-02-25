@@ -1,4 +1,19 @@
-module LangUtils exposing (isOk, isErr, partitionResults, isInRange, fst, snd, const, (>>>), startWith, notStartWith, isEnglishChar)
+module LangUtils
+    exposing
+        ( isOk
+        , isErr
+        , partitionResults
+        , find
+        , isInRange
+        , fst
+        , snd
+        , const
+        , (>>>)
+        , startWith
+        , notStartWith
+        , isEnglishChar
+        , isSameLength
+        )
 
 import Char
 
@@ -82,3 +97,14 @@ notStartWith p t =
 
 isEnglishChar c =
     Char.isLower c || Char.isUpper c
+
+
+find : (a -> Bool) -> List a -> Maybe a
+find p xs =
+    List.filter p xs
+        |> List.head
+
+
+isSameLength : List a -> List b -> Bool
+isSameLength a b =
+    List.length a == List.length b

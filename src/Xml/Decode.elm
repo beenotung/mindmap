@@ -1,6 +1,7 @@
 module Xml.Decode exposing (..)
 
 import Json.Decode
+import LangUtils
 import Parser exposing (Parser, (<*), (*>), (>>=))
 
 
@@ -88,3 +89,9 @@ namedNode targetName =
                     else
                         Parser.fail ("Unexpected node of name `" ++ name ++ "`, expecting name `" ++ targetName ++ "`")
         )
+
+
+findAttr : String -> List Attr -> Maybe String
+findAttr name attrs =
+    LangUtils.find (.name >> (==) name) attrs
+        |> Maybe.map .value

@@ -177,6 +177,19 @@ map f p =
     bind p (success << f)
 
 
+tryMap : (a -> Result String b) -> Parser c a -> Parser c b
+tryMap f p =
+    bind p
+        (\a ->
+            case f a of
+                Ok b ->
+                    success b
+
+                Err reason ->
+                    fail reason
+        )
+
+
 mapError : (String -> String) -> Parser c a -> Parser c a
 mapError f p =
     { parse = p.parse >> Result.mapError f }
