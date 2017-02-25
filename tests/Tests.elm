@@ -204,12 +204,24 @@ all =
                     \() ->
                         Expect.equal
                             (tryParseString "<map id=\"123\"></map>" Xml.Decode.node)
-                            (Ok ( Xml.Decode.Node { tag = "map", attrs = [ { name = "id", value = "123" } ] } [], "" ))
+                            (Ok ( Xml.Decode.Node "map" [ { name = "id", value = "123" } ] [], "" ))
                 , test "Xml.Decode.node with spaces" <|
                     \() ->
                         Expect.equal
                             (tryParseString "<map id=\"123\"> </map>" Xml.Decode.node)
-                            (Ok ( Xml.Decode.Node { tag = "map", attrs = [ { name = "id", value = "123" } ] } [], "" ))
+                            (Ok ( Xml.Decode.Node "map" [ { name = "id", value = "123" } ] [], "" ))
+                , test "Xml.Decode.node with spaces" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "<map id=\"123\"><node></node></map>" Xml.Decode.node)
+                            (Ok
+                                ( Xml.Decode.Node
+                                    "map"
+                                    [ { name = "id", value = "123" } ]
+                                    [ Xml.Decode.Node "node" [] [] ]
+                                , ""
+                                )
+                            )
                 ]
             ]
         ]

@@ -14,14 +14,8 @@ type alias Attr =
     }
 
 
-type alias NodeMeta =
-    { tag : String
-    , attrs : List Attr
-    }
-
-
 type Node
-    = Node NodeMeta (List Node)
+    = Node String (List Attr) (List Node)
 
 
 node : Parser Char Node
@@ -35,7 +29,7 @@ node =
                     (\( ( ( headTag, attrs ), childNodes ), tailTag ) ->
                         if headTag == tailTag then
                             Parser.success
-                                (Node { tag = headTag, attrs = attrs } childNodes)
+                                (Node headTag attrs childNodes)
                         else
                             Parser.fail <| "opening tag `" ++ headTag ++ "` does not match closing tag `" ++ tailTag ++ "`."
                     )
@@ -71,3 +65,10 @@ attr =
                 , value = b
                 }
             )
+
+
+{-| shortcut helper.
+-}
+emptyNode : String -> Node
+emptyNode name =
+    Node name [] []
