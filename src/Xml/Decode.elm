@@ -42,8 +42,9 @@ nodeHead : Parser Char ( String, List Attr )
 nodeHead =
     Parser.char '<'
         *> Parser.englishWord
-        |> Parser.pairWith (Parser.spaces *> Parser.any attr <* Parser.spaces)
+        |> Parser.pairWith (Parser.any (Parser.spaces *> attr <* Parser.spaces))
         <* Parser.char '>'
+        |> Parser.replaceError "Parser `nodeHead` failed."
 
 
 nodeTail : Parser Char String
@@ -52,6 +53,7 @@ nodeTail =
         *> Parser.char '/'
         *> Parser.englishWord
         <* Parser.char '>'
+        |> Parser.replaceError "Parser `nodeTail` failed."
 
 
 attr : Parser Char Attr
@@ -65,6 +67,7 @@ attr =
                 , value = b
                 }
             )
+        |> Parser.replaceError "Parser `attr` failed."
 
 
 {-| shortcut helper.

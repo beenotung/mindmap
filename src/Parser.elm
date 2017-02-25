@@ -194,6 +194,11 @@ replaceError =
     LangUtils.const >> mapError
 
 
+concatError : String -> Parser c a -> Parser c a
+concatError newS =
+    mapError (\oriS -> oriS ++ "; " ++ newS)
+
+
 satisfy : (a -> Bool) -> Parser a a
 satisfy p =
     bind item

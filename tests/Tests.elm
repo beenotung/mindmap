@@ -7,7 +7,7 @@ import Expect
 import Fuzz
 import String
 import Parser exposing (any, element, satisfy, some, tryParse, tryParseString, int, float)
-import Xml.Decode
+import Xml.Decode exposing (Node)
 
 
 sample : Test
@@ -222,6 +222,89 @@ all =
                                 , ""
                                 )
                             )
+                , test "Xml.Decode.node <- nested node" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "<map><node></node></map>" Xml.Decode.node)
+                            (Ok
+                                ( Xml.Decode.Node "map"
+                                    []
+                                    [ Xml.Decode.Node "node" [] []
+                                    ]
+                                , ""
+                                )
+                            )
+                , test "Xml.Decode.node <- nested node with attr" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "<map version=\"0.7.1\"><node id=\"1\"></node></map>" Xml.Decode.node)
+                            (Ok
+                                ( Xml.Decode.Node "map"
+                                    [ { name = "version", value = "0.7.1" } ]
+                                    [ Xml.Decode.Node "node"
+                                        [ { name = "id", value = "1" }
+                                        ]
+                                        []
+                                    ]
+                                , ""
+                                )
+                            )
+                , test "Xml.Decode.node <- nested node with multiple attrs" <|
+                    \() ->
+                        Expect.equal
+                            (tryParseString "<map version=\"0.7.1\"><node id=\"1\" text=\"content\"></node></map>" Xml.Decode.node)
+                            (Ok
+                                ( Xml.Decode.Node "map"
+                                    [ { name = "version", value = "0.7.1" } ]
+                                    [ Xml.Decode.Node "node"
+                                        [ { name = "id", value = "1" }
+                                        , { name = "text", value = "content" }
+                                        ]
+                                        []
+                                    ]
+                                , ""
+                                )
+                            )
+                ]
+            , describe "Xml.Decode (real world example)"
+                [ test "empty map" <|
+                    \() ->
+                        let
+                            simpleRawString =
+                                "<map version=\"0.7.1\"></map>"
+                        in
+                            Expect.equal
+                                (tryParseString simpleRawString Xml.Decode.node)
+                                (Ok ( Xml.Decode.Node "map" [ { name = "version", value = "0.7.1" } ] [], "" ))
+                , test "single node" <|
+                    \() ->
+                        let
+                            simpleRawString =
+                                "<map version=\"0.7.1\"><node ID=\"1\" TEXT=\"test\"></node></map>"
+                        in
+                            Expect.equal
+                                (tryParseString simpleRawString Xml.Decode.node)
+                                (Ok
+                                    ( Xml.Decode.Node "map"
+                                        [ { name = "version", value = "0.7.1" } ]
+                                        [ Xml.Decode.Node "node"
+                                            [ { name = "ID", value = "1" }
+                                            , { name = "TEXT", value = "test" }
+                                            ]
+                                            []
+                                        ]
+                                    , ""
+                                    )
+                                )
+                , test "simple map" <|
+                    \() ->
+                        let
+                            simpleRawString =
+                                "<map version=\"0.7.1\"><node ID=\"1\" TEXT=\"test\"><node ID=\"3\" TEXT=\"part&#x20;one\"><node ID=\"4\" TEXT=\"detail&#x20;1\"></node><node ID=\"5\" TEXT=\"detail&#x20;2\"></node></node><node ID=\"6\" TEXT=\"part&#x20;two\"></node></node></map>"
+                        in
+                            Expect.notEqual
+                                (tryParseString simpleRawString Xml.Decode.node)
+                                (Ok ( Xml.Decode.emptyNode "asd", "" ))
                 ]
             ]
         ]
