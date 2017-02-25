@@ -75,3 +75,16 @@ attr =
 emptyNode : String -> Node
 emptyNode name =
     Node name [] []
+
+
+namedNode : String -> Parser Char Node
+namedNode targetName =
+    Parser.bind node
+        (\node ->
+            case node of
+                Node name attrs children ->
+                    if name == targetName then
+                        Parser.success node
+                    else
+                        Parser.fail ("Unexpected node of name `" ++ name ++ "`, expecting name `" ++ targetName ++ "`")
+        )
