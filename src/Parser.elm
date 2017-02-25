@@ -174,14 +174,7 @@ flatMap =
 
 map : (a -> b) -> Parser c a -> Parser c b
 map f p =
-    bind p
-        (\a ->
-            let
-                b =
-                    f a
-            in
-                success b
-        )
+    bind p (success << f)
 
 
 mapError : (String -> String) -> Parser c a -> Parser c a
