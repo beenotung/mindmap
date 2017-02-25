@@ -65,10 +65,15 @@ attr =
         |> Parser.map
             (\( a, b ) ->
                 { name = a
-                , value = b
+                , value = unescapeString b
                 }
             )
         |> Parser.replaceError "Parser `attr` failed."
+
+
+unescapeString : String -> String
+unescapeString str =
+    LangUtils.replaceString "&#x20;" " " str
 
 
 {-| shortcut helper.

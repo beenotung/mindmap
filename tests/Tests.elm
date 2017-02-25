@@ -8,6 +8,7 @@ import Expect
 import Fuzz
 import String
 import Parser exposing (any, element, satisfy, some, tryParse, tryParseString, int, float)
+import TestFreeMindCore
 import Xml.Decode exposing (Node)
 
 
@@ -316,15 +317,5 @@ all =
                                 )
                 ]
             ]
-        , describe "Core Test Suite"
-            [ test "fail" <|
-                \() ->
-                    let
-                        simpleRawString =
-                            "<map version=\"0.7.1\"><node ID=\"1\" TEXT=\"test\"><node ID=\"3\" TEXT=\"part&#x20;one\"><node ID=\"4\" TEXT=\"detail&#x20;1\"></node><node ID=\"5\" TEXT=\"detail&#x20;2\"></node></node><node ID=\"6\" TEXT=\"part&#x20;two\"></node></node></map>"
-                    in
-                        Expect.notEqual
-                            (FreeMind.Decode.decodeMap simpleRawString)
-                            Maybe.Nothing
-            ]
+        , TestFreeMindCore.mainTest
         ]

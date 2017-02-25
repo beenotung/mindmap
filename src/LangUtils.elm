@@ -13,9 +13,11 @@ module LangUtils
         , notStartWith
         , isEnglishChar
         , isSameLength
+        , replaceString
         )
 
 import Char
+import Regex exposing (HowMany(All), regex, replace)
 
 
 isOk res =
@@ -108,3 +110,8 @@ find p xs =
 isSameLength : List a -> List b -> Bool
 isSameLength a b =
     List.length a == List.length b
+
+
+replaceString : String -> String -> String -> String
+replaceString pattern output input =
+    replace All (regex pattern) (\_ -> output) input
