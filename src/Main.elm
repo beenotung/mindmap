@@ -1,9 +1,11 @@
 module Main exposing (..)
 
-import Html exposing (beginnerProgram, text, div, h1, Attribute, input, body, Html)
-import Html.Attributes exposing (placeholder, style)
-import Html.Events exposing (onInput)
+import FreeMind.Decode
+import Html exposing (Attribute, Html, body, br, button, div, h1, input, text)
+import Html.Attributes exposing (placeholder, style, value)
+import Html.Events exposing (onClick, onInput)
 import Debug exposing (log)
+import Dispatch
 
 
 type alias Node =
@@ -27,24 +29,37 @@ type alias MindMap =
 
 type alias Model =
     { title : String
-    , mindMap : MindMap
+    , mindMap : Maybe MindMap
+    , mapText : String
     }
 
 
 type Msg
     = Import String
+    | LoadSample
 
 
-init : Model
-init =
+initModel : Model
+initModel =
     { title = "MindMap"
-    , mindMap =
-        { map =
-            { version = "1"
-            , node = []
-            }
-        }
+    , mindMap = Nothing
+    , mapText = ""
     }
+
+
+update : Msg -> Model -> ( Model, Cmd msg )
+update msg model =
+    case msg of
+        Import rawString ->
+            { model | mapText = rawString } ! []
+
+        LoadSample ->
+            { model | mapText = FreeMind.Decode.sampleRawString } ! []
+
+
+subscriptions : model -> Sub msg
+subscriptions model =
+    Sub.none
 
 
 cssBody =
@@ -63,9 +78,28 @@ view model =
         , input
             [ placeholder "copy from .mm file (paste here)"
             , onInput Import
+            , value model.mapText
             ]
             []
+        , button
+            [ onClick LoadSample
+            ]
+            [ text "load sample"
+            ]
+        , br [] []
+        , text
+            (case model.mindMap of
+                Just mindMap ->
+                    "Drawing Map"
+
+                Nothing ->
+                    "No Map"
+            )
         ]
+
+
+wrappedUpdate msg model =
+    update (log "msg" msg) (log "old model" model)
 
 
 wrappedView model =
@@ -74,20 +108,16 @@ wrappedView model =
         |> view
 
 
-update : Msg -> Model -> Model
-update msg model =
-    case msg of
-        Import rawString ->
-            model
-
-
-wrappedUpdate msg model =
-    update (log "msg" msg) (log "old model" model)
+wrappedSubscriptions model =
+    model
+        |> log "subscripe"
+        |> subscriptions
 
 
 main =
-    beginnerProgram
-        { model = init
-        , view = wrappedView
+    Html.program
+        { init = initModel ! []
         , update = wrappedUpdate
+        , subscriptions = wrappedSubscriptions
+        , view = wrappedView
         }

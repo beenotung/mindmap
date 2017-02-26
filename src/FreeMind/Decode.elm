@@ -15,6 +15,10 @@ type Node
     = Node String String (List Node)
 
 
+sampleRawString =
+    "<map version=\"0.7.1\"><node ID=\"1\" TEXT=\"test\"><node ID=\"3\" TEXT=\"part&#x20;one\"><node ID=\"4\" TEXT=\"detail&#x20;1\"></node><node ID=\"5\" TEXT=\"detail&#x20;2\"></node></node><node ID=\"6\" TEXT=\"part&#x20;two\"></node></node></map>"
+
+
 decodeMap : String -> Maybe Map
 decodeMap rawString =
     map.parse (String.toList rawString)
