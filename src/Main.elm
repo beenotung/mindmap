@@ -22,7 +22,7 @@ initModel =
     }
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     let
         ( newModel, cmd ) =

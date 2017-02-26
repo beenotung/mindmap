@@ -1,9 +1,9 @@
 module MindMap.Input exposing (..)
 
 import FreeMind.Decode
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Html exposing (Html, button, div, input, text)
+import Html.Attributes exposing (name, placeholder, value)
+import Html.Events exposing (onClick, onInput)
 
 
 type alias Model =
