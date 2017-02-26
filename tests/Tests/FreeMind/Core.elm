@@ -1,12 +1,13 @@
-module TestFreeMindCore exposing (mainTest)
+module Tests.FreeMind.Core exposing (all)
 
 import Expect
 import FreeMind.Decode
-import Test exposing (describe, test)
+import Test exposing (Test, describe, test)
 
 
-mainTest =
-    describe "Core Test Suite"
+all : Test
+all =
+    describe "MindMap Core Test Suite"
         [ test "Simple Map" <|
             \() ->
                 let
