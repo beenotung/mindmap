@@ -14,10 +14,11 @@ module LangUtils
         , isEnglishChar
         , isSameLength
         , replaceString
+        , logFunction
         )
 
 import Char
-import Regex exposing (HowMany(All), regex, replace)
+import Regex
 
 
 isOk res =
@@ -114,4 +115,11 @@ isSameLength a b =
 
 replaceString : String -> String -> String -> String
 replaceString pattern output input =
-    replace All (regex pattern) (\_ -> output) input
+    Regex.replace Regex.All (Regex.regex pattern) (\_ -> output) input
+
+
+logFunction : String -> (a -> b) -> a -> b
+logFunction name f a =
+    a
+        |> Debug.log name
+        |> f
