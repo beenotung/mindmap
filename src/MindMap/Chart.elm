@@ -16,8 +16,14 @@ update msg model =
     case msg of
         Init ->
             let
-                map =
+                res =
                     FreeMind.Decode.decodeMap model.mapText
+
+                map =
+                    if String.length model.mapText == 0 then
+                        Result.Err MindMap.Core.msgNoMapData
+                    else
+                        Result.fromMaybe "Invalid mind map data." res
             in
                 { model | map = map }
 
@@ -25,10 +31,10 @@ update msg model =
 view : Model -> Html Msg
 view model =
     case model.map of
-        Nothing ->
-            text "No mind map data yet."
+        Err reason ->
+            text reason
 
-        Just map ->
+        Ok map ->
             Html.node "mindmap-chart"
                 []
                 [ text <| "freemind version: " ++ map.version
