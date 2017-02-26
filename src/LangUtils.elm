@@ -1,23 +1,8 @@
-module LangUtils
-    exposing
-        ( isOk
-        , isErr
-        , partitionResults
-        , find
-        , isInRange
-        , fst
-        , snd
-        , const
-        , (>>>)
-        , startWith
-        , notStartWith
-        , isEnglishChar
-        , isSameLength
-        , replaceString
-        , logFunction
-        )
+module LangUtils exposing (..)
 
 import Char
+import Html
+import Html.Attributes exposing (style)
 import Regex
 
 
@@ -123,3 +108,29 @@ logFunction name f a =
     a
         |> Debug.log name
         |> f
+
+
+cssWidth : Int -> Html.Attribute msg
+cssWidth width =
+    style [ ( "width", toString width ) ]
+
+
+cssHeight : Int -> Html.Attribute msg
+cssHeight height =
+    style [ ( "height", toString height ) ]
+
+
+cssSize : Int -> Int -> Html.Attribute msg
+cssSize width height =
+    style
+        [ ( "width", toString width ++ "px" )
+        , ( "height", toString height ++ "px" )
+        ]
+
+
+cssPosition : Int -> Int -> Html.Attribute msg
+cssPosition top left =
+    style
+        [ ( "left", toString left ++ "px" )
+        , ( "top", toString top ++ "px" )
+        ]

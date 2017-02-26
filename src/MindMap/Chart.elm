@@ -1,8 +1,9 @@
 module MindMap.Chart exposing (..)
 
 import FreeMind.Decode exposing (Node)
-import Html exposing (Html, div, text)
-import Html.Attributes exposing (id, name)
+import Html exposing (Html, br, div, text)
+import Html.Attributes exposing (height, id, name, style, width)
+import LangUtils exposing (cssSize)
 import MindMap.Core exposing (Model)
 
 
@@ -31,7 +32,12 @@ view model =
             Html.node "mindmap-chart"
                 []
                 [ text <| "freemind version: " ++ map.version
-                , div [] (renderNodes map.nodes)
+                , br [] []
+                , Html.node "mindmap-root"
+                    [ cssSize model.width model.height
+                    , style [ ( "background", "grey" ) ]
+                    ]
+                    (renderNodes map.nodes)
                 ]
 
 
