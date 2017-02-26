@@ -1,15 +1,18 @@
 module MindMap.Core exposing (..)
 
+import FreeMind.Decode exposing (FreeMind)
 
-type alias MindMap =
-    { version : String
-    , nodes : List Node
+
+type alias Model =
+    { mapText : String
+    , message : Maybe String
+    , map : Maybe FreeMind
     }
 
 
-type Node
-    = Node NodeMeta (List NodeMeta)
-
-
-type alias NodeMeta =
-    { id : String, text : String }
+initModel : Model
+initModel =
+    { mapText = ""
+    , message = Nothing
+    , map = Nothing
+    }

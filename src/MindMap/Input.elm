@@ -1,22 +1,10 @@
 module MindMap.Input exposing (..)
 
 import FreeMind.Decode
-import Html exposing (Html, button, div, input, text)
+import Html exposing (Html, button, input, text)
 import Html.Attributes exposing (name, placeholder, value)
 import Html.Events exposing (onClick, onInput)
-
-
-type alias Model =
-    { mapText : String
-    , message : Maybe String
-    }
-
-
-initModel : Model
-initModel =
-    { mapText = ""
-    , message = Nothing
-    }
+import MindMap.Core exposing (Model)
 
 
 type Msg
@@ -24,14 +12,15 @@ type Msg
     | LoadSample
 
 
-update : Msg -> Model -> ( Model, Cmd msg )
+update : Msg -> Model -> Model
 update msg model =
     case msg of
         Import content ->
-            { model | mapText = content } ! []
+            { model | mapText = content }
 
         LoadSample ->
-            { model | mapText = FreeMind.Decode.sampleRawString } ! []
+            Import FreeMind.Decode.sampleRawString
+                |> flip update model
 
 
 subscriptions : Model -> Sub msg
@@ -41,7 +30,7 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div
+    Html.node "mindmap-input"
         [ name "MindMap Input"
         ]
         [ input
@@ -51,4 +40,5 @@ view model =
             ]
             []
         , button [ onClick LoadSample ] [ text "Load Sample" ]
+        , text (Maybe.withDefault "" model.message)
         ]

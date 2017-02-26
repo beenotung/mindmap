@@ -5,8 +5,10 @@ import Parser exposing (Parser)
 import Xml.Decode exposing (namedNode, findAttr)
 
 
-type alias Map =
-    List Node
+type alias FreeMind =
+    { version : String
+    , nodes : List Node
+    }
 
 
 {-| Node id text children
@@ -19,7 +21,7 @@ sampleRawString =
     "<map version=\"0.7.1\"><node ID=\"1\" TEXT=\"test\"><node ID=\"3\" TEXT=\"part&#x20;one\"><node ID=\"4\" TEXT=\"detail&#x20;1\"></node><node ID=\"5\" TEXT=\"detail&#x20;2\"></node></node><node ID=\"6\" TEXT=\"part&#x20;two\"></node></node></map>"
 
 
-decodeMap : String -> Maybe Map
+decodeMap : String -> Maybe FreeMind
 decodeMap rawString =
     map.parse (String.toList rawString)
         |> Result.toMaybe
@@ -27,19 +29,19 @@ decodeMap rawString =
         |> Maybe.map LangUtils.fst
 
 
-map : Parser Char Map
+map : Parser Char FreeMind
 map =
     namedNode "map"
         |> Parser.tryMap transformMap_helper
 
 
-transformMap_helper : Xml.Decode.Node -> Result String Map
+transformMap_helper : Xml.Decode.Node -> Result String FreeMind
 transformMap_helper node =
     transformMap node
         |> Result.fromMaybe "Failed to parse as FreeMind map."
 
 
-transformMap : Xml.Decode.Node -> Maybe Map
+transformMap : Xml.Decode.Node -> Maybe FreeMind
 transformMap node =
     case node of
         Xml.Decode.Node name attrs children ->
@@ -49,7 +51,11 @@ transformMap node =
                         List.filterMap transformNode children
                 in
                     if LangUtils.isSameLength kids children then
-                        Just kids
+                        Xml.Decode.findAttr "version" attrs
+                            |> Maybe.map
+                                (\version ->
+                                    { version = version, nodes = kids }
+                                )
                     else
                         Nothing
             else

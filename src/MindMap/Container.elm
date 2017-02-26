@@ -1,15 +1,11 @@
 module MindMap.Container exposing (..)
 
+import FreeMind.Decode exposing (node)
 import Html exposing (Html, div)
-import Html.Attributes exposing (name)
+import Html.Attributes exposing (id, name)
 import MindMap.Chart
+import MindMap.Core exposing (Model)
 import MindMap.Input
-
-
-type alias Model =
-    { input : MindMap.Input.Model
-    , chart : MindMap.Chart.Model
-    }
 
 
 type Msg
@@ -17,34 +13,22 @@ type Msg
     | ChartMsg MindMap.Chart.Msg
 
 
-initModel : Model
-initModel =
-    { input = MindMap.Input.initModel
-    , chart = MindMap.Chart.initModel
-    }
-
-
 view : Model -> Html Msg
 view model =
-    div [ name "MindMap" ]
-        [ MindMap.Input.view model.input |> Html.map InputMsg
-        , MindMap.Chart.view model.chart |> Html.map ChartMsg
+    Html.node "mindmap"
+        []
+        [ MindMap.Input.view model |> Html.map InputMsg
+        , Html.br [] []
+        , MindMap.Chart.view model |> Html.map ChartMsg
         ]
 
 
-update : Msg -> Model -> ( Model, Cmd msg )
+update : Msg -> Model -> Model
 update msg model =
     case msg of
         InputMsg msg ->
-            let
-                ( newModel, cmd ) =
-                    MindMap.Input.update msg model.input
-            in
-                ( { model | input = newModel }, cmd )
+            MindMap.Input.update msg model
+                |> update (ChartMsg MindMap.Chart.Init)
 
         ChartMsg msg ->
-            let
-                ( newModel, cmd ) =
-                    MindMap.Chart.update msg model.chart
-            in
-                ( { model | chart = newModel }, cmd )
+            MindMap.Chart.update msg model

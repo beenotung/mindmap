@@ -5,10 +5,11 @@ import Html exposing (Html, body, h1, text)
 import Html.Attributes exposing (style)
 import LangUtils
 import MindMap.Container
+import MindMap.Core
 
 
 type alias Model =
-    { title : String, mindMap : MindMap.Container.Model }
+    { title : String, mindMap : MindMap.Core.Model }
 
 
 type alias Msg =
@@ -18,17 +19,14 @@ type alias Msg =
 initModel : Model
 initModel =
     { title = "MindMap"
-    , mindMap = MindMap.Container.initModel
+    , mindMap = MindMap.Core.initModel
     }
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
-    let
-        ( newModel, cmd ) =
-            MindMap.Container.update msg model.mindMap
-    in
-        ( { model | mindMap = newModel }, cmd )
+    MindMap.Container.update msg model.mindMap
+        |> \x -> { model | mindMap = x } ! []
 
 
 subscriptions : Model -> Sub Msg
