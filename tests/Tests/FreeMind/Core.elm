@@ -13,18 +13,20 @@ all =
                 Expect.equal
                     (FreeMind.Decode.decodeMap sampleRawString)
                     (Just
-                        ([ FreeMind.Decode.Node "1"
-                            "test"
-                            ([ FreeMind.Decode.Node "3"
-                                "part one"
-                                ([ FreeMind.Decode.Node "4" "detail 1" []
-                                 , FreeMind.Decode.Node "5" "detail 2" []
+                        { version = "0.7.1"
+                        , nodes =
+                            [ FreeMind.Decode.Node "1"
+                                "test"
+                                ([ FreeMind.Decode.Node "3"
+                                    "part one"
+                                    ([ FreeMind.Decode.Node "4" "detail 1" []
+                                     , FreeMind.Decode.Node "5" "detail 2" []
+                                     ]
+                                    )
+                                 , FreeMind.Decode.Node "6" "part two" []
                                  ]
                                 )
-                             , FreeMind.Decode.Node "6" "part two" []
-                             ]
-                            )
-                         ]
-                        )
+                            ]
+                        }
                     )
         ]
