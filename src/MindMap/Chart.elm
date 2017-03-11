@@ -1,11 +1,12 @@
 module MindMap.Chart exposing (..)
 
 import Animation
-import FreeMind.Decode exposing (Node)
+import Dict exposing (Dict)
+import FreeMind.Decode exposing (FreeMind, Node)
 import Html exposing (Html, br, div, text)
 import Html.Attributes exposing (attribute, height, id, name, style, width)
 import LangUtils exposing (cssSize)
-import MindMap.Core exposing (Model)
+import MindMap.Core exposing (Model, Position)
 
 
 type Msg
@@ -13,21 +14,30 @@ type Msg
     | Animate Animation.Msg
 
 
+initNodePosition : List Node -> Dict FreeMind.Decode.Node Position
+initNodePosition nodes =
+    Dict.empty
+
+
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
         Init ->
             let
-                res =
-                    FreeMind.Decode.decodeMap model.mapText
-
-                map =
+                mindMap =
                     if String.length model.mapText == 0 then
                         Result.Err MindMap.Core.msgNoMapData
                     else
-                        Result.fromMaybe "Invalid mind map data." res
+                        FreeMind.Decode.decodeMap model.mapText
+                            |> Maybe.map
+                                (\mapData ->
+                                    { mapData = mapData
+                                    , nodePositionDict = initNodePosition mapData.nodes
+                                    }
+                                )
+                            |> Result.fromMaybe "Invalid mind map data."
             in
-                { model | map = map } ! []
+                { model | mindMap = mindMap } ! []
 
         Animate time ->
             ( { model
@@ -39,34 +49,38 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    case model.map of
+    case model.mindMap of
         Err reason ->
             text reason
 
-        Ok map ->
+        Ok mindMap ->
             Html.node "mindmap-chart"
                 []
-                [ text <| "freemind version: " ++ map.version
+                [ text <| "freemind version: " ++ mindMap.mapData.version
                 , br [] []
                 , div
                     [ cssSize model.width model.height
                     , style [ ( "background", "grey" ) ]
                     ]
-                    (renderNodes map.nodes)
+                    (renderNodes mindMap.nodePositionDict)
                 ]
 
 
-renderNode : Node -> Html Msg
-renderNode node =
+renderNode : ( Node, Position ) -> Html Msg
+renderNode ( node, position ) =
     case node of
         FreeMind.Decode.Node id name children ->
             Html.node "mindmap-node"
                 []
                 [ text name
-                , div [] (renderNodes children)
+                , text <| toString position.x
+                , text <| toString position.y
                 ]
 
 
-renderNodes : List Node -> List (Html Msg)
-renderNodes =
-    List.map renderNode
+{-|
+ TODO read http://reasonablypolymorphic.com/blog/elm-is-wrong
+-}
+renderNodes : Dict Node Position -> List (Html Msg)
+renderNodes nodePositionDict =
+    List.map renderNode (Dict.toList nodePositionDict)
