@@ -2,8 +2,8 @@
 show mindmap on the browser from freemind (.mm)
 
 ## Progress
-- [ ] xml parser
-- [ ] freemind parser
+- [x] xml parser
+- [x] freemind parser
 - [ ] render mindmap
 
 ## TODO

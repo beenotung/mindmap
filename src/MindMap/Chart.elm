@@ -1,17 +1,19 @@
 module MindMap.Chart exposing (..)
 
+import Animation
 import FreeMind.Decode exposing (Node)
 import Html exposing (Html, br, div, text)
-import Html.Attributes exposing (height, id, name, style, width)
+import Html.Attributes exposing (attribute, height, id, name, style, width)
 import LangUtils exposing (cssSize)
 import MindMap.Core exposing (Model)
 
 
 type Msg
     = Init
+    | Animate Animation.Msg
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
         Init ->
@@ -25,7 +27,14 @@ update msg model =
                     else
                         Result.fromMaybe "Invalid mind map data." res
             in
-                { model | map = map }
+                { model | map = map } ! []
+
+        Animate time ->
+            ( { model
+                | animState = List.map (Animation.update time) model.animState
+              }
+            , Cmd.none
+            )
 
 
 view : Model -> Html Msg
@@ -39,7 +48,7 @@ view model =
                 []
                 [ text <| "freemind version: " ++ map.version
                 , br [] []
-                , Html.node "mindmap-root"
+                , div
                     [ cssSize model.width model.height
                     , style [ ( "background", "grey" ) ]
                     ]

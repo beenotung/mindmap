@@ -1,5 +1,6 @@
 module MindMap.Core exposing (..)
 
+import Animation
 import FreeMind.Decode exposing (FreeMind)
 
 
@@ -9,6 +10,8 @@ type alias Model =
     , map : Result String FreeMind
     , width : Int
     , height : Int
+    , animState : List Animation.State
+    , index : Int
     }
 
 
@@ -19,6 +22,8 @@ initModel =
     , map = Result.Err msgNoMapData
     , width = 800
     , height = 600
+    , animState = []
+    , index = 1
     }
 
 

@@ -23,12 +23,18 @@ view model =
         ]
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
         InputMsg msg ->
-            MindMap.Input.update msg model
-                |> update (ChartMsg MindMap.Chart.Init)
+            let
+                ( model1, cmd1 ) =
+                    MindMap.Input.update msg model
+
+                ( model2, cmd2 ) =
+                    update (ChartMsg MindMap.Chart.Init) model1
+            in
+                ( model2, cmd2 )
 
         ChartMsg msg ->
             MindMap.Chart.update msg model

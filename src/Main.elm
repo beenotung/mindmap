@@ -25,8 +25,11 @@ initModel =
 
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
-    MindMap.Container.update msg model.mindMap
-        |> \x -> { model | mindMap = x } ! []
+    let
+        ( mindMap, cmd ) =
+            MindMap.Container.update msg model.mindMap
+    in
+        ( { model | mindMap = mindMap }, cmd )
 
 
 subscriptions : Model -> Sub Msg

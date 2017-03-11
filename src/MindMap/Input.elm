@@ -14,11 +14,11 @@ type Msg
     | UpdateChartHeight String
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Import content ->
-            { model | mapText = content }
+            { model | mapText = content } ! []
 
         LoadSample ->
             Import FreeMind.Decode.sampleRawString
@@ -28,11 +28,13 @@ update msg model =
             String.toInt text
                 |> Result.map (\x -> { model | width = x })
                 |> Result.withDefault model
+                |> flip (!) []
 
         UpdateChartHeight text ->
             String.toInt text
                 |> Result.map (\x -> { model | height = x })
                 |> Result.withDefault model
+                |> flip (!) []
 
 
 subscriptions : Model -> Sub msg
